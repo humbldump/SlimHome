@@ -1,0 +1,29 @@
+{
+  "name": "slimhome",
+  "version": "1.0.0",
+  "description": "SlimHome(Smart House) is an environment for IOT solutions.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/humbldump/SlimHome.git"
+  },
+  "keywords": [
+    "smart",
+    "home"
+  ],
+  "author": "humbldump",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/humbldump/SlimHome/issues"
+  },
+  "homepage": "https://github.com/humbldump/SlimHome#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "socket.io": "^4.4.0"
+  }
+}

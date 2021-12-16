@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>react</title>
+    <script src="https://cdn.socket.io/socket.io-3.0.1.min.js"></script>
+  </head>
+  <body>
+    <script>
+      const socket = io.connect("localhost:80", {
+        query: {
+          device_id: "esp32",
+          device_slug: "Mahir_Tekin_Erdensan_1",
+          device_password: "12345678"
+        }
+      });
+
+
+      //socket.emit("reactData", {test:"data"})
+
+      socket.on("data", e => {
+        console.log(e)
+      })
+    </script>
+  </body>
+</html>
