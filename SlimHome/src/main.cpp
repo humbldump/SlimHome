@@ -15,46 +15,38 @@
 
 
 #define esp_out Serial
-
 #define built_in_led 2
 
 SocketIOclient socketIO;
 
-const char* pass = "Mahirtekin199852";
-const char* ssid = "Xiaomi_wifi";
-const char* websockets_server_host = "entegre.humbldump.com"; //Enter server adress
-const uint16_t websockets_server_port = 80; // Enter server port
+const char 
+  *pass = "Mahirtekin199852",
+  *ssid = "Xiaomi_wifi",
+  *server_host = "entegre.humbldump.com";
+const uint16_t server_port = 80; // Enter server port
 
 boolean connectWiFi();
 void searchWiFi();
 void blinkBuiltInLed(int times, int delayT);
 void socketIOEvent(socketIOmessageType_t type, uint8_t * payload, size_t length);
 
-void controlled(const char* message, size_t length){
-  esp_out.println("saas");
-  esp_out.println(message);
-  
-}
-
+//main function
 void setup() {
 
   esp_out.begin(115200);
   esp_out.setDebugOutput(true);
   
+  //setup built in led
   pinMode(built_in_led, OUTPUT);
 
   boolean wifi = connectWiFi();
-  if (wifi) {
-    esp_out.println("Connected to WiFi");
-  } else {
-    esp_out.println("Failed to connect to WiFi");
+  if(wifi){
+    socketIO.begin(server_host, server_port, "/socket.io/?EIO=4&device_id=esp32&device_slug=Mahir_Tekin_Erdensan_1&password=12345678");
+    socketIO.onEvent(socketIOEvent);
   }
-
-  socketIO.begin("entegre.humbldump.com", 80, "/socket.io/?EIO=4&device_id=esp32&device_slug=Mahir_Tekin_Erdensan_1&password=12345678");
-  socketIO.onEvent(socketIOEvent);
 }
 
-unsigned long messageTimestamp = 0;
+
 void loop() {
   socketIO.loop();
 }
@@ -96,14 +88,13 @@ boolean connectWiFi(){
   esp_out.printf("\nGateway IP address: %s", WiFi.gatewayIP().toString().c_str());;
   esp_out.printf("\n\n-----------| Connection on %s has done with success |-----------\n", ssid);
   blinkBuiltInLed(4, 200);
-
   return true;
 }
 
 
 //this function will blink the built in led
 void blinkBuiltInLed(int times, int delayT){
-  for (size_t i = 0; i <= times; i++)
+  for (size_t i = 0; i < times; i++)
   {
     digitalWrite(built_in_led, HIGH);
     delay(delayT);
@@ -113,25 +104,26 @@ void blinkBuiltInLed(int times, int delayT){
   
 }
 
+void BuiltInLed(float req){
+  digitalWrite(built_in_led, req == 1 ? HIGH : LOW);
+  delay(200);
+}
+
 void socketIOEvent(socketIOmessageType_t type, uint8_t * payload, size_t length) {
+    blinkBuiltInLed(1, 200);
     switch(type) {
         case sIOtype_DISCONNECT:
             esp_out.printf("[IOc] Disconnected!\n");
             break;
         case sIOtype_CONNECT:
             esp_out.printf("[IOc] Connected to url: %s\n", payload);
-
             // join default namespace (no auto join in Socket.IO V3)
             socketIO.send(sIOtype_CONNECT, "/");
             break;
         case sIOtype_EVENT:
         {
-            char * sptr = NULL;
-            int id = strtol((char *)payload, &sptr, 10);
-            esp_out.printf("[IOc] get event: %s id: %d\n", payload, id);
-            if(id) {
-                payload = (uint8_t *)sptr;
-            }
+
+            esp_out.printf("New Command Pass: %s\n", payload);
             DynamicJsonDocument doc(1024);
             DeserializationError error = deserializeJson(doc, payload, length);
 
@@ -141,30 +133,29 @@ void socketIOEvent(socketIOmessageType_t type, uint8_t * payload, size_t length)
                 return;
             }
 
-            String eventName = doc[0];
-            esp_out.printf("[IOc] event name: %s\n", eventName.c_str());
-            esp_out.println(doc.as<String>());
-            esp_out.println(doc[1][0].as<String>());
+            //main command came on socket io eg "espCommand_compile"
+            const char* command_key = doc[0];
+            
+            
 
-            // Message Includes a ID for a ACK (callback)
-            if(id) {
-                esp_out.println("saas");
-                // creat JSON message for Socket.IO (ack)
-                DynamicJsonDocument docOut(1024);
-                JsonArray array = docOut.to<JsonArray>();
+            if(strcmp(command_key, "espCommand_compile") == 0){
+              //parse command data into json object
+              JsonObject command_data = doc[1]["command_info"];
 
-                // add payload (parameters) for the ack (callback function)
-                JsonObject param1 = array.createNestedObject();
-                param1["now"] = millis();
+              const char* command_name = command_data["home_device_str"];
+              const long command_command = command_data["home_device_command"];
 
-                // JSON to String (serializion)
-                String output;
-                output += id;
-                serializeJson(docOut, output);
+              if(strcmp(command_name, "builtin") == 0){
+                BuiltInLed(command_command);
+              }
 
-                // Send event
-                socketIO.send(sIOtype_ACK, output);
+              esp_out.println("Command: passed");
+
             }
+            // String eventName = doc[0];
+            // esp_out.printf("[IOc] event name: %s\n", eventName.c_str());
+            // esp_out.println(doc.as<String>());
+            // esp_out.println(doc[1][0].as<String>());
         }
             break;
         case sIOtype_ACK:

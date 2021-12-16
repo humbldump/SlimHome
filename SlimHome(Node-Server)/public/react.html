@@ -8,7 +8,8 @@
     <script src="https://cdn.socket.io/socket.io-3.0.1.min.js"></script>
   </head>
   <body>
-    <div class="clicktest" onclick="submit_command()">Komutu Gönder!</div>
+    <div class="clicktest" onclick="submit_command(1)">led yak!</div>
+    <div class="clicktest" onclick="submit_command(0)">led kapat!</div>
     <script>
       const socket = io.connect("http://entegre.humbldump.com:80", {
         query: {
@@ -20,14 +21,14 @@
         },
       });
 
-      function submit_command() {
+      function submit_command(input) {
         socket.emit("espCommand_receive", {
           command_info: {
             device_id: "react",
             device_slug: "Mahir_Tekin_Erdensan_1",
             device_password: "12345678",
-            home_device: "lamba1",
-            home_device_command: "on",
+            home_device_str: "builtin",
+            home_device_command: input,
           },
         });
       }
