@@ -18,6 +18,7 @@
 
 SocketIOclient socketIO;
 
+//i know leak on ma password dont worry bruh
 const char 
   *pass = "Mahirtekin199852",
   *ssid = "Xiaomi_wifi",
