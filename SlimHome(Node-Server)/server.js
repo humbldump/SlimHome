@@ -20,11 +20,11 @@ const io = socket(server, {
     credentials: true,
   },
 });
+
 // when a conenction on socket is made
 io.on("connection", (c) => {
   if (c.handshake.query?.device_id) {
     const d_info = {device_id, device_slug, device_password} = c.handshake.query;
-    
     if (device_id == "esp32") {
       esp32_list[device_slug] = { ...c.handshake.query, id: c.id };
     }
@@ -35,10 +35,29 @@ io.on("connection", (c) => {
 
   //io.to(masterPort).emit('data', masterPort)
   //c.emit("data", c.handshake);
-  c.emit("data", esp32_list)
+  //c.emit("data", esp32_list)
 
   //When a react client send data to the server
   c.on("espCommand_receive", (data) => {
+    if (esp32_list[data.command_info?.device_slug] == undefined || esp32_list[data.command_info?.device_slug] == null) {
+      c.emit("responseToReact", {
+        type: "error",
+        do: "nothing",
+        message: "Looks like esp not connected yet try again later",
+      })
+      return
+    }
+
+    if(esp32_list[data.command_info?.device_slug]['password'] != data.command_info?.device_password){
+      c.emit("responseToReact", {
+        type: "error",
+        do: "opensettings",
+        message: "Wrong password please adjust your settings",
+        request: data.command_info
+      })
+      return;
+    }
+
     c.broadcast.to(data.command_info?.device_slug).emit("espCommand_compile", data);
   });
 });

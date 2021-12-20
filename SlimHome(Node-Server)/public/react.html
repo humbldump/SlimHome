@@ -8,8 +8,22 @@
     <script src="https://cdn.socket.io/socket.io-3.0.1.min.js"></script>
   </head>
   <body>
-    <div class="clicktest" onclick="submit_command(1)">led yak!</div>
-    <div class="clicktest" onclick="submit_command(0)">led kapat!</div>
+    <div class="clicktest" onclick="submit_command('builtin',1)">led yak!</div>
+    <div class="clicktest" onclick="submit_command('builtin',0)">led kapat!</div>
+
+    <div class="clicktest" onclick="submit_command('living_room_light',1)">Oturma Odası yak!</div>
+    <div class="clicktest" onclick="submit_command('living_room_light',0)">Oturma Odası kapat!</div>
+
+    <div class="clicktest" onclick="submit_command('kitchen_light',1)">Mutfağı yak!</div>
+    <div class="clicktest" onclick="submit_command('kitchen_light',0)">Mutfağı kapat!</div>
+
+    <div class="clicktest" onclick="submit_command('bathroom_light',1)">Tuvalet Işığını yak!</div>
+    <div class="clicktest" onclick="submit_command('bathroom_light',0)">Tuvalet Işığını kapat!</div>
+
+    <div class="clicktest" onclick="submit_command('all_room_lights',1)">Tüm Işığını yak!</div>
+    <div class="clicktest" onclick="submit_command('all_room_lights',0)">Tüm Işığını kapat!</div>
+
+    <div class="clicktest" onclick="submit_command('restart_device',1)">Restart!</div>
     <script>
       const socket = io.connect("http://entegre.humbldump.com:80", {
         query: {
@@ -21,19 +35,23 @@
         },
       });
 
-      function submit_command(input) {
+      function submit_command(device,input) {
         socket.emit("espCommand_receive", {
           command_info: {
             device_id: "react",
             device_slug: "Mahir_Tekin_Erdensan_1",
-            device_password: "12345678",
-            home_device_str: "builtin",
+            device_password: "123456782",
+            home_device_str: device,
             home_device_command: input,
           },
         });
       }
 
       socket.on("data", (e) => {
+        console.log(e);
+      });
+		
+	  socket.on("responseToReact", (e) => {
         console.log(e);
       });
     </script>

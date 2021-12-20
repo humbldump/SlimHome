@@ -15,7 +15,6 @@
 
 
 #define esp_out Serial
-#define built_in_led 2
 
 SocketIOclient socketIO;
 
@@ -23,12 +22,20 @@ const char
   *pass = "Mahirtekin199852",
   *ssid = "Xiaomi_wifi",
   *server_host = "entegre.humbldump.com";
+
+
+const int built_in_led = 2,
+      living_room_light = 22,
+      kitchen_light = 21,
+      bathroom_light = 18;
+
 const uint16_t server_port = 80; // Enter server port
 
 boolean connectWiFi();
 void searchWiFi();
 void blinkBuiltInLed(int times, int delayT);
 void socketIOEvent(socketIOmessageType_t type, uint8_t * payload, size_t length);
+void room_control(int led, float req);
 
 //main function
 void setup() {
@@ -38,10 +45,18 @@ void setup() {
   
   //setup built in led
   pinMode(built_in_led, OUTPUT);
+  pinMode(living_room_light, OUTPUT);
+  pinMode(kitchen_light, OUTPUT);
+  pinMode(bathroom_light, OUTPUT);
+
+  //close all lights
+  room_control(living_room_light, 0);
+  room_control(kitchen_light, 0);
+  room_control(bathroom_light, 0);
 
   boolean wifi = connectWiFi();
   if(wifi){
-    socketIO.begin(server_host, server_port, "/socket.io/?EIO=4&device_id=esp32&device_slug=Mahir_Tekin_Erdensan_1&password=12345678");
+    socketIO.begin(server_host, server_port, "/socket.io/?EIO=4&device_id=esp32&device_slug=humbldump&password=123456789");
     socketIO.onEvent(socketIOEvent);
   }
 }
@@ -109,8 +124,13 @@ void BuiltInLed(float req){
   delay(200);
 }
 
+//this function will control room lights
+void room_control(int led,float req){
+  digitalWrite(led, req == 1 ? HIGH : LOW);
+
+}
+
 void socketIOEvent(socketIOmessageType_t type, uint8_t * payload, size_t length) {
-    blinkBuiltInLed(1, 200);
     switch(type) {
         case sIOtype_DISCONNECT:
             esp_out.printf("[IOc] Disconnected!\n");
@@ -148,14 +168,30 @@ void socketIOEvent(socketIOmessageType_t type, uint8_t * payload, size_t length)
               if(strcmp(command_name, "builtin") == 0){
                 BuiltInLed(command_command);
               }
+              else if(strcmp(command_name, "living_room_light") == 0){
+                room_control(living_room_light, command_command);
+              }
+              else if(strcmp(command_name, "kitchen_light") == 0){
+                room_control(kitchen_light, command_command);
+              }
+              else if(strcmp(command_name, "bathroom_light") == 0){
+                room_control(bathroom_light, command_command);
+              }
+              else if(strcmp(command_name, "all_room_lights") == 0){
+                room_control(living_room_light, command_command);
+                room_control(kitchen_light, command_command);
+                room_control(bathroom_light, command_command);
+              }
+              else if(strcmp(command_name, "restart_device") == 0 ){
+                ESP.restart();
+              }
+              else{
+                esp_out.printf("Command not found: %s\n", command_name);
+              }
 
               esp_out.println("Command: passed");
 
             }
-            // String eventName = doc[0];
-            // esp_out.printf("[IOc] event name: %s\n", eventName.c_str());
-            // esp_out.println(doc.as<String>());
-            // esp_out.println(doc[1][0].as<String>());
         }
             break;
         case sIOtype_ACK:
@@ -171,4 +207,5 @@ void socketIOEvent(socketIOmessageType_t type, uint8_t * payload, size_t length)
             esp_out.printf("[IOc] get binary ack: %u\n", length);
             break;
     }
+    blinkBuiltInLed(1, 200);
 }
